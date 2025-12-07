@@ -1,0 +1,32 @@
+version: "3.9"
+
+services:
+  server:
+    build: ./server
+    container_name: ctf-server
+    restart: unless-stopped
+    env_file:
+      - ./server/.env.docker
+    environment:
+      - PORT=5000
+      # MONGO_URI is already in .env.docker pointing to cloud
+    ports:
+      - "5000:5000"
+
+  client:
+    build: ./client
+    container_name: ctf-client
+    restart: unless-stopped
+    environment:
+      # used by next.config.mjs rewrites
+      - BACKEND_URL=http://server:5000
+
+      # used by proxy.js
+      - JWT_SECRET=super_secret_key
+      - COOKIE_NAME=token
+
+      - NODE_ENV=production
+    depends_on:
+      - server
+    ports:
+      - "3000:3000"

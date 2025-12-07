@@ -1,0 +1,676 @@
+// app/challenges/[id]/page.jsx
+"use client";
+
+import { useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
+import { apiRequest } from "../../../lib/api";
+import { useAuth } from "../../../context/AuthContext";
+
+export default function ChallengeDetailPage() {
+  const { id } = useParams();
+  const router = useRouter();
+  const { user, loading } = useAuth();
+
+  const [problem, setProblem] = useState(null);
+  const [flag, setFlag] = useState("");
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
+  const [attempts, setAttempts] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Load problem details (public)
+  useEffect(() => {
+    if (!id) return;
+
+    async function loadProblem() {
+      try {
+        setError("");
+        const p = await apiRequest(`/api/problems/${id}`);
+        setProblem(p);
+      } catch (err) {
+        console.error(err);
+        setError(err.message || "Failed to load challenge");
+      }
+    }
+
+    loadProblem();
+  }, [id]);
+
+  // Load user's attempts only when logged in
+  useEffect(() => {
+    if (!id) return;
+    if (!user) {
+      setAttempts([]);
+      return;
+    }
+
+    async function loadAttempts() {
+      try {
+        const a = await apiRequest(`/api/attempts/mine/${id}`);
+        setAttempts(a);
+      } catch (err) {
+        console.error(err);
+        setAttempts([]);
+      }
+    }
+
+    loadAttempts();
+  }, [id, user]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+
+    if (!user) {
+      setMessage("Please login to attempt this challenge.");
+      return;
+    }
+
+    if (!flag.trim()) {
+      setError("Please enter a flag.");
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await apiRequest("/api/attempts", {
+        method: "POST",
+        body: JSON.stringify({
+          problemId: id,
+          answer: flag,
+        }),
+      });
+
+      setMessage(res.message || "Attempt submitted");
+      setFlag("");
+
+      // Reload attempts after submit
+      try {
+        const a = await apiRequest(`/api/attempts/mine/${id}`);
+        setAttempts(a);
+      } catch {
+        // ignore
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.message || "Failed to submit attempt");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const getDifficultyColor = (difficulty) => {
+    const d = difficulty?.toLowerCase();
+    if (d === "easy") return "text-green-600 bg-green-50 border-green-200";
+    if (d === "medium") return "text-yellow-600 bg-yellow-50 border-yellow-200";
+    if (d === "hard") return "text-red-600 bg-red-50 border-red-200";
+    return "text-monarch-900/70 bg-[#E6EAEE] border-monarch-900/10";
+  };
+
+  const getDifficultyIcon = (difficulty) => {
+    const d = difficulty?.toLowerCase();
+    if (d === "easy") {
+      return (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+          />
+        </svg>
+      );
+    }
+    if (d === "medium") {
+      return (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M13 10V3L4 14h7v7l9-11h-7z"
+          />
+        </svg>
+      );
+    }
+    if (d === "hard") {
+      return (
+        <svg
+          className="h-4 w-4"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z"
+          />
+        </svg>
+      );
+    }
+    return null;
+  };
+
+  const getResultBadge = (result) => {
+    if (result === "correct") {
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+            <path
+              fillRule="evenodd"
+              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Correct
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+          <path
+            fillRule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+            clipRule="evenodd"
+          />
+        </svg>
+        Incorrect
+      </span>
+    );
+  };
+
+  if (loading && !problem) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#98C5EA]/30 border-t-[#0D6BA8]"></div>
+          <p className="text-monarch-900/70">Loading challenge...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !problem) {
+    return (
+      <div className="min-h-screen bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
+        <div className="mx-auto max-w-4xl px-4 py-12">
+          <div className="rounded-xl border border-red-500/20 bg-red-50 p-6">
+            <div className="flex items-start gap-3">
+              <svg
+                className="mt-0.5 h-6 w-6 shrink-0 text-red-600"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <div>
+                <h3 className="font-semibold text-red-800">
+                  Error Loading Challenge
+                </h3>
+                <p className="mt-1 text-sm text-red-600">{error}</p>
+                <button
+                  onClick={() => router.push("/challenges")}
+                  className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+                >
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
+                    />
+                  </svg>
+                  Back to Challenges
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!problem) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#98C5EA]/30 border-t-[#0D6BA8]"></div>
+          <p className="text-monarch-900/70">Loading challenge...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
+      <div className="mx-auto max-w-5xl px-4 py-12 sm:px-6 lg:px-8">
+        {/* Back Button */}
+        <button
+          onClick={() => router.push("/challenges")}
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-monarch-900/70 transition-colors hover:text-[#0D6BA8]"
+        >
+          <svg
+            className="h-4 w-4"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M10 19l-7-7m0 0l7-7m-7 7h18"
+            />
+          </svg>
+          Back to Challenges
+        </button>
+
+        {/* Challenge Header */}
+        <div className="mb-8 rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+          <div className="mb-6 flex flex-wrap items-center gap-3">
+            <span
+              className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${getDifficultyColor(
+                problem.difficulty
+              )}`}
+            >
+              {getDifficultyIcon(problem.difficulty)}
+              {problem.difficulty || "Unknown"}
+            </span>
+            {problem.points && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0D6BA8]/20 bg-[#0D6BA8]/10 px-3 py-1.5 text-sm font-semibold text-[#0D6BA8]">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                  />
+                </svg>
+                {problem.points} pts
+              </span>
+            )}
+            {problem.category && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-monarch-900/10 bg-monarch-900/5 px-3 py-1.5 text-sm font-medium text-monarch-900">
+                <svg
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                  />
+                </svg>
+                {problem.category}
+              </span>
+            )}
+          </div>
+
+          <h1 className="mb-4 text-3xl font-bold text-monarch-900 sm:text-4xl">
+            {problem.title}
+          </h1>
+
+          <p className="text-lg leading-relaxed text-monarch-900/70">
+            {problem.description}
+          </p>
+        </div>
+
+        <div className="grid gap-8 lg:grid-cols-3">
+          {/* Main Content */}
+          <div className="lg:col-span-2">
+            {/* Submit Flag Section */}
+            <div className="mb-8 rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#98C5EA]/20 to-[#0D6BA8]/20">
+                  <svg
+                    className="h-5 w-5 text-[#0D6BA8]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-monarch-900">
+                  Submit Flag
+                </h2>
+              </div>
+
+              {!user ? (
+                <div className="rounded-xl border border-[#0D6BA8]/20 bg-[#98C5EA]/5 p-6">
+                  <div className="mb-4 flex items-start gap-3">
+                    <svg
+                      className="mt-0.5 h-6 w-6 shrink-0 text-[#0D6BA8]"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    <div>
+                      <h3 className="font-semibold text-monarch-900">
+                        Login Required
+                      </h3>
+                      <p className="mt-1 text-sm text-monarch-900/70">
+                        Please login to attempt this challenge and track your
+                        progress.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => router.push("/login")}
+                    className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-monarch-900 to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105"
+                  >
+                    Go to Login
+                    <svg
+                      className="h-5 w-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M13 7l5 5m0 0l-5 5m5-5H6"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {error && (
+                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-50 p-4">
+                      <svg
+                        className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p className="text-sm text-red-600">{error}</p>
+                    </div>
+                  )}
+
+                  {message && (
+                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-50 p-4">
+                      <svg
+                        className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p className="text-sm text-green-600">{message}</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={handleSubmit} className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="flag"
+                        className="mb-2 block text-sm font-medium text-monarch-900"
+                      >
+                        Flag
+                      </label>
+                      <input
+                        id="flag"
+                        type="text"
+                        placeholder="flag{enter_your_flag_here}"
+                        value={flag}
+                        onChange={(e) => setFlag(e.target.value)}
+                        disabled={submitting}
+                        className="w-full rounded-lg border border-monarch-900/20 bg-white px-4 py-3 text-monarch-900 placeholder-monarch-900/40 transition-all focus:border-[#0D6BA8] focus:outline-none focus:ring-2 focus:ring-[#0D6BA8]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={submitting || !flag.trim()}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-linear-to-r from-monarch-900 to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                    >
+                      {submitting ? (
+                        <>
+                          <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          Submit Flag
+                          <svg
+                            className="h-5 w-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M13 7l5 5m0 0l-5 5m5-5H6"
+                            />
+                          </svg>
+                        </>
+                      )}
+                    </button>
+                  </form>
+                </>
+              )}
+            </div>
+
+            {/* Attempts History */}
+            <div className="rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+              <div className="mb-6 flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#98C5EA]/20 to-[#0D6BA8]/20">
+                  <svg
+                    className="h-5 w-5 text-[#0D6BA8]"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-bold text-monarch-900">
+                  Your Attempts
+                </h2>
+              </div>
+
+              {!user ? (
+                <div className="rounded-xl border border-monarch-900/10 bg-monarch-900/5 p-6 text-center">
+                  <svg
+                    className="mx-auto mb-3 h-12 w-12 text-monarch-900/40"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                    />
+                  </svg>
+                  <p className="text-monarch-900/70">
+                    Login to see your attempts.
+                  </p>
+                </div>
+              ) : attempts.length === 0 ? (
+                <div className="rounded-xl border border-monarch-900/10 bg-monarch-900/5 p-6 text-center">
+                  <svg
+                    className="mx-auto mb-3 h-12 w-12 text-monarch-900/40"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                    />
+                  </svg>
+                  <p className="text-monarch-900/70">
+                    No attempts yet. Be the first to try!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {attempts.map((a) => (
+                    <div
+                      key={a._id}
+                      className="rounded-lg border border-monarch-900/10 bg-monarch-900/5 p-4 transition-all hover:border-[#0D6BA8]/30 hover:bg-[#98C5EA]/5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          {getResultBadge(a.result)}
+                          <span className="text-sm text-monarch-900/60">
+                            {new Date(a.createdAt).toLocaleString()}
+                          </span>
+                        </div>
+                        {a.answers && a.answers.length > 0 && (
+                          <code className="rounded bg-monarch-900/10 px-2 py-1 text-xs font-mono text-monarch-900">
+                            {a.answers.join(", ")}
+                          </code>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Sidebar */}
+          <div className="lg:col-span-1">
+            {/* Challenge Stats */}
+            <div className="sticky top-6 rounded-2xl border border-monarch-900/10 bg-white p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-bold text-monarch-900">
+                Challenge Stats
+              </h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-monarch-900/70">
+                    Difficulty
+                  </span>
+                  <span
+                    className={`text-sm font-semibold ${
+                      problem.difficulty?.toLowerCase() === "easy"
+                        ? "text-green-600"
+                        : problem.difficulty?.toLowerCase() === "medium"
+                        ? "text-yellow-600"
+                        : "text-red-600"
+                    }`}
+                  >
+                    {problem.difficulty || "Unknown"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-monarch-900/70">Points</span>
+                  <span className="text-sm font-semibold text-[#0D6BA8]">
+                    {problem.points || "N/A"}
+                  </span>
+                </div>
+                {problem.category && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-monarch-900/70">
+                      Category
+                    </span>
+                    <span className="text-sm font-semibold text-monarch-900">
+                      {problem.category}
+                    </span>
+                  </div>
+                )}
+                {user && attempts.length > 0 && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-monarch-900/70">
+                      Your Attempts
+                    </span>
+                    <span className="text-sm font-semibold text-monarch-900">
+                      {attempts.length}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 pt-6 border-t border-monarch-900/10">
+                <button
+                  onClick={() => router.push("/leaderboard")}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#0D6BA8]/20 bg-[#0D6BA8]/5 px-4 py-2.5 text-sm font-medium text-[#0D6BA8] transition-all hover:bg-[#0D6BA8]/10"
+                >
+                  View Leaderboard
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
