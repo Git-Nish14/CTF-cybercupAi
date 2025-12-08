@@ -1,59 +1,47 @@
 @import "tailwindcss";
 
-/* Light mode defaults - white base per requirements */
 :root {
   --background: #ffffff;
   --foreground: #043657;
 }
 
-/* Tailwind theme tokens with ODU Brand Guidelines */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
-  /* === PRIMARY PALETTE === */
-  /* Monarch Blue - Primary brand color */
   --color-monarch-950: #021d31;
-  --color-monarch-900: #043657; /* CMYK 100/77/38/36 - Core brand */
+  --color-monarch-900: #043657;
   --color-monarch-800: #06446f;
   --color-monarch-700: #0d6ba8;
 
-  /* Hudson Blue - Primary accent */
-  --color-hudson: #98c5ea; /* CMYK 38/11/0/0 - Key highlight */
+  --color-hudson: #98c5ea;
   --color-hudson-dark: #6795b8;
 
-  /* Silver Reign - Primary neutral */
-  --color-silver: #828a8f; /* CMYK 52/40/37/3 */
+  --color-silver: #828a8f;
   --color-silver-light: #bac4cd;
 
-  /* === SECONDARY PALETTE GROUP 1 (Blues/Teals) === */
-  --color-chesapeake: #0d6ba8; /* CMYK 90/56/9/1 */
-  --color-aquatic: #1fadc5; /* CMYK 73/10/20/0 */
-  --color-stormy: #6795b8; /* CMYK 62/33/15/0 */
-  --color-coastal: #b0f1fa; /* CMYK 26/0/5/0 */
-  --color-ultramarine: #1c4bff; /* Digital only */
-  --color-electric: #00f1ff; /* Digital only */
+  --color-chesapeake: #0d6ba8;
+  --color-aquatic: #1fadc5;
+  --color-stormy: #6795b8;
+  --color-coastal: #b0f1fa;
+  --color-ultramarine: #1c4bff;
+  --color-electric: #00f1ff;
 
-  /* === SECONDARY PALETTE GROUP 2 (Neutrals) === */
-  /* Warm tones - coastal beaches */
-  --color-ocean-sand: #bfab93; /* CMYK 26/30/42/0 */
-  --color-sarah-sand: #e5d1b5; /* CMYK 9/16/29/0 */
-  --color-community-sand: #f8ede4; /* CMYK 2/6/8/0 */
+  --color-ocean-sand: #bfab93;
+  --color-sarah-sand: #e5d1b5;
+  --color-community-sand: #f8ede4;
 
-  /* Cool tones - formal options */
-  --color-carrier-gray: #bac4cd; /* CMYK 27/16/14/0 */
-  --color-wisconsin-gray: #e6eaee; /* CMYK 5/2/1/3 */
-  --color-bright-white: #ffffff; /* CMYK 0/0/0/0 */
+  --color-carrier-gray: #bac4cd;
+  --color-wisconsin-gray: #e6eaee;
+  --color-bright-white: #ffffff;
 
-  /* === SEMANTIC COLORS === */
   --color-success: #1fadc5;
   --color-warning: #e5d1b5;
   --color-error: #dc2626;
   --color-info: #98c5ea;
 
-  /* === SHADOWS === */
   --shadow-sm: 0 1px 2px 0 rgb(4 54 87 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(4 54 87 / 0.1),
     0 2px 4px -2px rgb(4 54 87 / 0.1);
@@ -63,7 +51,6 @@
     0 8px 10px -6px rgb(4 54 87 / 0.1);
 }
 
-/* Clean layout foundation */
 * {
   box-sizing: border-box;
 }
@@ -90,7 +77,6 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Typography scale - inspired by ODU guidelines */
 h1,
 h2,
 h3,
@@ -116,7 +102,6 @@ h3 {
   font-size: clamp(1.25rem, 3vw, 2rem);
 }
 
-/* Smooth transitions - more selective */
 a,
 button {
   transition-property: color, background-color, border-color, transform, opacity;
@@ -124,19 +109,16 @@ button {
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Focus states - accessibility */
 *:focus-visible {
   outline: 2px solid var(--color-hudson);
   outline-offset: 2px;
 }
 
-/* Selection color */
 ::selection {
   background-color: var(--color-hudson);
   color: var(--color-monarch-950);
 }
 
-/* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 12px;
 }
@@ -154,9 +136,14 @@ button {
   background: var(--color-monarch-700);
 }
 
-/* Custom utility classes */
 .text-balance {
-  text-wrap: balance;
+  word-wrap: break-word;
+}
+
+@supports (text-wrap: balance) {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
 
 .gradient-text {
@@ -172,11 +159,10 @@ button {
 
 .glass-effect {
   background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
-/* Animation keyframes */
 @keyframes slide-up {
   from {
     opacity: 0;

@@ -98,7 +98,6 @@ export default function AdminHomePage() {
   return (
     <div className="min-h-screen bg-linear-to-b from-white via-wisconsin-gray/30 to-white">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Header */}
         <header className="mb-12">
           <div className="flex flex-wrap items-end justify-between gap-6">
             <div className="flex-1">
@@ -131,8 +130,6 @@ export default function AdminHomePage() {
             </div>
           </div>
         </header>
-
-        {/* Main Grid */}
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="lg:col-span-2 space-y-6">
             <div className="grid gap-6 sm:grid-cols-2">
@@ -190,8 +187,6 @@ export default function AdminHomePage() {
                   </div>
                 </div>
               </Link>
-
-              {/* Users & Attempts Card */}
               <Link
                 href="/admin/users"
                 className="group relative overflow-hidden rounded-3xl border border-monarch-900/10 bg-white p-8 shadow-lg transition-all hover:shadow-xl hover:-translate-y-1"
@@ -247,8 +242,6 @@ export default function AdminHomePage() {
                 </div>
               </Link>
             </div>
-
-            {/* Quick Tips */}
             <div className="rounded-3xl border border-monarch-900/10 bg-linear-to-br from-sarah-sand to-community-sand p-8 shadow-md">
               <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-monarch-900">
                 Quick Tips
@@ -314,10 +307,7 @@ export default function AdminHomePage() {
               </ul>
             </div>
           </div>
-
-          {/* Sidebar - Stats & Info */}
           <div className="space-y-6">
-            {/* System Snapshot */}
             <div className="rounded-3xl border border-monarch-900/10 bg-white p-6 shadow-lg">
               <h2 className="mb-4 text-xs font-semibold uppercase tracking-widest text-hudson">
                 System Snapshot

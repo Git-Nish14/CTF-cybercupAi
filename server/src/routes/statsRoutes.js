@@ -1,4 +1,3 @@
-// src/routes/statsRoutes.js
 const express = require("express");
 const User = require("../models/User");
 const Problem = require("../models/Problem");

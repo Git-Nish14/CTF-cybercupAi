@@ -1,4 +1,3 @@
-// context/AuthContext.jsx
 "use client";
 
 import { createContext, useContext, useEffect, useState } from "react";
@@ -7,10 +6,8 @@ import { apiRequest } from "../lib/api";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { id, name, email, isAdmin }
-  const [loading, setLoading] = useState(true); // true while we check /me
-
-  // 👇 run once on initial load to restore user from cookie
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
     async function loadCurrentUser() {
       try {
@@ -19,7 +16,6 @@ export function AuthProvider({ children }) {
         });
         setUser(data);
       } catch (err) {
-        // 401 or any error -> not logged in
         setUser(null);
       } finally {
         setLoading(false);

@@ -130,7 +130,7 @@ export default function HomePage() {
       {/* Hero Section */}
       <section
         ref={heroRef}
-        className="relative px-4 pt-16 pb-20 sm:px-6 lg:px-8 opacity-0 translate-y-4 transition-all duration-700"
+        className="relative px-4 lg:pt-4 pt-16 pb-20 sm:px-6 lg:px-8 opacity-0 translate-y-4 transition-all duration-700"
       >
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
@@ -352,9 +352,10 @@ export default function HomePage() {
             </div>
 
             <div className="relative z-10 text-center">
-              <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+              <h2 className="mb-4 text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl text-white!">
                 Ready to Test Your Skills?
               </h2>
+
               <p className="mx-auto mb-8 max-w-2xl text-base text-white/90 sm:text-lg md:text-xl">
                 Join thousands of security professionals competing in real-time
                 challenges.

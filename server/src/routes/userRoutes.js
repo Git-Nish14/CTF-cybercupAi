@@ -1,4 +1,3 @@
-// src/routes/userRoutes.js
 const express = require("express");
 const { auth, adminOnly } = require("../middleware/auth");
 const User = require("../models/User");

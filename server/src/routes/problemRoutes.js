@@ -1,4 +1,3 @@
-// src/routes/problemRoutes.js
 const express = require("express");
 const Problem = require("../models/Problem");
 const { auth, adminOnly } = require("../middleware/auth");

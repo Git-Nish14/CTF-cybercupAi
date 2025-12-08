@@ -291,7 +291,6 @@ export default function AdminUserDetailPage() {
   return (
     <div className="w-full bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
       <div className="mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
-        {/* Back Button */}
         <div className="mb-6">
           <Link href="/admin/users">
             <button className="inline-flex items-center gap-2 text-[#0D6BA8] transition-colors hover:text-monarch-900">
@@ -312,8 +311,6 @@ export default function AdminUserDetailPage() {
             </button>
           </Link>
         </div>
-
-        {/* User Profile Card */}
         <div className="mb-8 overflow-hidden rounded-2xl border border-monarch-900/10 bg-white shadow-lg">
           <div className="bg-white px-6 py-4">
             <div className="flex items-center gap-6">
@@ -375,8 +372,6 @@ export default function AdminUserDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* Stats Overview */}
         <div className="mb-8 grid gap-6 sm:grid-cols-3">
           <div className="rounded-xl border border-monarch-900/10 bg-white p-6 shadow-sm">
             <div className="flex items-center gap-4">
@@ -458,8 +453,6 @@ export default function AdminUserDetailPage() {
             </div>
           </div>
         </div>
-
-        {/* Problem Attempts Section */}
         <div className="rounded-2xl border border-monarch-900/10 bg-white shadow-lg">
           <div className="border-b border-monarch-900/10 px-8 py-6">
             <h2 className="text-2xl font-bold text-monarch-900">

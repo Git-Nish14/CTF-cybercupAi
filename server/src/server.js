@@ -1,4 +1,3 @@
-// src/server.js
 const express = require("express");
 const dotenv = require("dotenv");
 const cookieParser = require("cookie-parser");
@@ -16,20 +15,17 @@ const statsRoutes = require("./routes/statsRoutes");
 
 const app = express();
 
-// connect to MongoDB
 connectDB();
 
-// middlewares
 app.use(
   cors({
-    origin: "http://localhost:3000", // your React/Next frontend
+    origin: "http://localhost:3000",
     credentials: true,
   })
 );
 app.use(express.json());
 app.use(cookieParser());
 
-// routes
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/attempts", attemptRoutes);
@@ -37,7 +33,6 @@ app.use("/api/users", userRoutes);
 app.use("/api/leaderboard", leaderboardRoutes);
 app.use("/api/stats", statsRoutes);
 
-// health check
 app.get("/", (req, res) => {
   res.send("CTF backend API is running");
 });

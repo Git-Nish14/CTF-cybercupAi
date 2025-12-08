@@ -8,7 +8,6 @@ export default function LeaderboardPage() {
   const [leaderboard, setLeaderboard] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const [timeFilter, setTimeFilter] = useState("all"); // all, today, week, month
 
   useEffect(() => {
     async function loadLeaderboard() {
@@ -150,7 +149,7 @@ export default function LeaderboardPage() {
   }
 
   const topThree = leaderboard.slice(0, 3);
-  const allUsers = leaderboard; // Show all users in the table
+  const allUsers = leaderboard;
 
   return (
     <div className="min-h-screen w-full bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">

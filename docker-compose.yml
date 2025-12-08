@@ -9,7 +9,6 @@ services:
       - ./server/.env.docker
     environment:
       - PORT=5000
-      # MONGO_URI is already in .env.docker pointing to cloud
     ports:
       - "5000:5000"
 
@@ -18,10 +17,7 @@ services:
     container_name: ctf-client
     restart: unless-stopped
     environment:
-      # used by next.config.mjs rewrites
       - BACKEND_URL=http://server:5000
-
-      # used by proxy.js
       - JWT_SECRET=super_secret_key
       - COOKIE_NAME=token
 

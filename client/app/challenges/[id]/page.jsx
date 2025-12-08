@@ -1,102 +1,92 @@
-// app/challenges/[id]/page.jsx
 "use client";
-
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { apiRequest } from "../../../lib/api";
 import { useAuth } from "../../../context/AuthContext";
+import { apiRequest } from "../../../lib/api";
 
 export default function ChallengeDetailPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
 
-  const [problem, setProblem] = useState(null);
-  const [flag, setFlag] = useState("");
-  const [error, setError] = useState("");
-  const [message, setMessage] = useState("");
+  const [challenge, setChallenge] = useState(null);
   const [attempts, setAttempts] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
+  const [answer, setAnswer] = useState("");
+  const [error, setError] = useState("");
+  const [attemptError, setAttemptError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [loadingAttempt, setLoadingAttempt] = useState(false);
+  const [hasCompletedChallenge, setHasCompletedChallenge] = useState(false);
 
-  // Load problem details (public)
+  // Load challenge info
   useEffect(() => {
-    if (!id) return;
-
-    async function loadProblem() {
+    async function loadChallenge() {
       try {
-        setError("");
-        const p = await apiRequest(`/api/problems/${id}`);
-        setProblem(p);
+        const data = await apiRequest(`/api/problems/${id}`);
+        setChallenge(data);
       } catch (err) {
         console.error(err);
         setError(err.message || "Failed to load challenge");
       }
     }
-
-    loadProblem();
+    if (id) loadChallenge();
   }, [id]);
 
-  // Load user's attempts only when logged in
-  useEffect(() => {
-    if (!id) return;
-    if (!user) {
-      setAttempts([]);
-      return;
-    }
-
-    async function loadAttempts() {
-      try {
-        const a = await apiRequest(`/api/attempts/mine/${id}`);
-        setAttempts(a);
-      } catch (err) {
-        console.error(err);
-        setAttempts([]);
-      }
-    }
-
-    loadAttempts();
-  }, [id, user]);
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError("");
-    setMessage("");
-
-    if (!user) {
-      setMessage("Please login to attempt this challenge.");
-      return;
-    }
-
-    if (!flag.trim()) {
-      setError("Please enter a flag.");
-      return;
-    }
-
+  // Load attempts for current user
+  const loadAttempts = async () => {
+    if (!user) return;
     try {
-      setSubmitting(true);
-      const res = await apiRequest("/api/attempts", {
-        method: "POST",
-        body: JSON.stringify({
-          problemId: id,
-          answer: flag,
-        }),
-      });
+      const data = await apiRequest(`/api/attempts/mine/${id}`);
+      setAttempts(data);
 
-      setMessage(res.message || "Attempt submitted");
-      setFlag("");
-
-      // Reload attempts after submit
-      try {
-        const a = await apiRequest(`/api/attempts/mine/${id}`);
-        setAttempts(a);
-      } catch {
-        // ignore
-      }
+      // Check if user has already completed this challenge
+      const hasCorrect = data.some((a) => a.result === "correct");
+      setHasCompletedChallenge(hasCorrect);
     } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to submit attempt");
+      setAttemptError(err.message || "Failed to load attempts");
+    }
+  };
+
+  useEffect(() => {
+    if (id && user) {
+      loadAttempts();
+    } else {
+      setAttempts([]);
+      setHasCompletedChallenge(false);
+    }
+  }, [id, user]);
+
+  const onSubmitFlag = async (e) => {
+    e.preventDefault();
+
+    if (!user) {
+      setAttemptError("You must be logged in to submit a flag.");
+      return;
+    }
+
+    if (hasCompletedChallenge) {
+      setAttemptError("You have already completed this challenge!");
+      return;
+    }
+
+    setAttemptError("");
+    setSuccessMessage("");
+    setLoadingAttempt(true);
+
+    try {
+      const result = await apiRequest(`/api/attempts/${id}`, {
+        method: "POST",
+        body: JSON.stringify({ answers: [answer] }),
+      });
+      setAnswer("");
+      setSuccessMessage(result.message || "Attempt submitted successfully!");
+      await loadAttempts();
+    } catch (err) {
+      console.error(err);
+      setAttemptError(err.message || "Failed to submit attempt");
     } finally {
-      setSubmitting(false);
+      setLoadingAttempt(false);
     }
   };
 
@@ -105,7 +95,7 @@ export default function ChallengeDetailPage() {
     if (d === "easy") return "text-green-600 bg-green-50 border-green-200";
     if (d === "medium") return "text-yellow-600 bg-yellow-50 border-yellow-200";
     if (d === "hard") return "text-red-600 bg-red-50 border-red-200";
-    return "text-monarch-900/70 bg-[#E6EAEE] border-monarch-900/10";
+    return "text-monarch bg-[#E6EAEE] border-monarch/10";
   };
 
   const getDifficultyIcon = (difficulty) => {
@@ -164,47 +154,7 @@ export default function ChallengeDetailPage() {
     return null;
   };
 
-  const getResultBadge = (result) => {
-    if (result === "correct") {
-      return (
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
-          <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-            <path
-              fillRule="evenodd"
-              d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
-              clipRule="evenodd"
-            />
-          </svg>
-          Correct
-        </span>
-      );
-    }
-    return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
-        <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-          <path
-            fillRule="evenodd"
-            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Incorrect
-      </span>
-    );
-  };
-
-  if (loading && !problem) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#98C5EA]/30 border-t-[#0D6BA8]"></div>
-          <p className="text-monarch-900/70">Loading challenge...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !problem) {
+  if (error && !challenge) {
     return (
       <div className="min-h-screen bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
         <div className="mx-auto max-w-4xl px-4 py-12">
@@ -230,19 +180,6 @@ export default function ChallengeDetailPage() {
                   onClick={() => router.push("/challenges")}
                   className="mt-4 inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
                 >
-                  <svg
-                    className="h-4 w-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M10 19l-7-7m0 0l7-7m-7 7h18"
-                    />
-                  </svg>
                   Back to Challenges
                 </button>
               </div>
@@ -253,12 +190,12 @@ export default function ChallengeDetailPage() {
     );
   }
 
-  if (!problem) {
+  if (!challenge) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-linear-to-b from-white via-[#E6EAEE]/20 to-white">
         <div className="text-center">
           <div className="mx-auto mb-4 h-16 w-16 animate-spin rounded-full border-4 border-[#98C5EA]/30 border-t-[#0D6BA8]"></div>
-          <p className="text-monarch-900/70">Loading challenge...</p>
+          <p className="text-monarch/70">Loading challenge...</p>
         </div>
       </div>
     );
@@ -270,7 +207,7 @@ export default function ChallengeDetailPage() {
         {/* Back Button */}
         <button
           onClick={() => router.push("/challenges")}
-          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-monarch-900/70 transition-colors hover:text-[#0D6BA8]"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-monarch/70 transition-colors hover:text-[#0D6BA8]"
         >
           <svg
             className="h-4 w-4"
@@ -289,17 +226,17 @@ export default function ChallengeDetailPage() {
         </button>
 
         {/* Challenge Header */}
-        <div className="mb-8 rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+        <div className="mb-8 rounded-2xl border border-monarch/10 bg-white p-8 shadow-lg">
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <span
               className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium ${getDifficultyColor(
-                problem.difficulty
+                challenge.difficulty
               )}`}
             >
-              {getDifficultyIcon(problem.difficulty)}
-              {problem.difficulty || "Unknown"}
+              {getDifficultyIcon(challenge.difficulty)}
+              {challenge.difficulty || "Unknown"}
             </span>
-            {problem.points && (
+            {challenge.points && (
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0D6BA8]/20 bg-[#0D6BA8]/10 px-3 py-1.5 text-sm font-semibold text-[#0D6BA8]">
                 <svg
                   className="h-4 w-4"
@@ -314,11 +251,11 @@ export default function ChallengeDetailPage() {
                     d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
                   />
                 </svg>
-                {problem.points} pts
+                {challenge.points} pts
               </span>
             )}
-            {problem.category && (
-              <span className="inline-flex items-center gap-1.5 rounded-full border border-monarch-900/10 bg-monarch-900/5 px-3 py-1.5 text-sm font-medium text-monarch-900">
+            {challenge.category && (
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-monarch/10 bg-monarch/5 px-3 py-1.5 text-sm font-medium text-monarch">
                 <svg
                   className="h-4 w-4"
                   fill="none"
@@ -332,25 +269,24 @@ export default function ChallengeDetailPage() {
                     d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
                   />
                 </svg>
-                {problem.category}
+                {challenge.category}
               </span>
             )}
           </div>
 
-          <h1 className="mb-4 text-3xl font-bold text-monarch-900 sm:text-4xl">
-            {problem.title}
+          <h1 className="mb-4 text-3xl font-bold text-monarch sm:text-4xl">
+            {challenge.title}
           </h1>
 
-          <p className="text-lg leading-relaxed text-monarch-900/70">
-            {problem.description}
+          <p className="text-lg leading-relaxed text-monarch/70">
+            {challenge.description}
           </p>
         </div>
 
         <div className="grid gap-8 lg:grid-cols-3">
-          {/* Main Content */}
           <div className="lg:col-span-2">
             {/* Submit Flag Section */}
-            <div className="mb-8 rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+            <div className="mb-8 rounded-2xl border border-monarch/10 bg-white p-8 shadow-lg">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#98C5EA]/20 to-[#0D6BA8]/20">
                   <svg
@@ -367,9 +303,7 @@ export default function ChallengeDetailPage() {
                     />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-monarch-900">
-                  Submit Flag
-                </h2>
+                <h2 className="text-2xl font-bold text-monarch">Submit Flag</h2>
               </div>
 
               {!user ? (
@@ -389,10 +323,10 @@ export default function ChallengeDetailPage() {
                       />
                     </svg>
                     <div>
-                      <h3 className="font-semibold text-monarch-900">
+                      <h3 className="font-semibold text-monarch">
                         Login Required
                       </h3>
-                      <p className="mt-1 text-sm text-monarch-900/70">
+                      <p className="mt-1 text-sm text-monarch/70">
                         Please login to attempt this challenge and track your
                         progress.
                       </p>
@@ -400,7 +334,7 @@ export default function ChallengeDetailPage() {
                   </div>
                   <button
                     onClick={() => router.push("/login")}
-                    className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-monarch-900 to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105"
+                    className="inline-flex items-center gap-2 rounded-lg bg-linear-to-r from-monarch to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105"
                   >
                     Go to Login
                     <svg
@@ -420,24 +354,7 @@ export default function ChallengeDetailPage() {
                 </div>
               ) : (
                 <>
-                  {error && (
-                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-50 p-4">
-                      <svg
-                        className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path
-                          fillRule="evenodd"
-                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
-                      <p className="text-sm text-red-600">{error}</p>
-                    </div>
-                  )}
-
-                  {message && (
+                  {hasCompletedChallenge && (
                     <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-50 p-4">
                       <svg
                         className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
@@ -450,15 +367,56 @@ export default function ChallengeDetailPage() {
                           clipRule="evenodd"
                         />
                       </svg>
-                      <p className="text-sm text-green-600">{message}</p>
+                      <div>
+                        <p className="font-semibold text-green-700">
+                          Challenge Completed!
+                        </p>
+                        <p className="text-sm text-green-600">
+                          You have already solved this challenge.
+                        </p>
+                      </div>
                     </div>
                   )}
 
-                  <form onSubmit={handleSubmit} className="space-y-4">
+                  {attemptError && (
+                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-50 p-4">
+                      <svg
+                        className="mt-0.5 h-5 w-5 shrink-0 text-red-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p className="text-sm text-red-600">{attemptError}</p>
+                    </div>
+                  )}
+
+                  {successMessage && (
+                    <div className="mb-4 flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-50 p-4">
+                      <svg
+                        className="mt-0.5 h-5 w-5 shrink-0 text-green-600"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                      <p className="text-sm text-green-600">{successMessage}</p>
+                    </div>
+                  )}
+
+                  <form onSubmit={onSubmitFlag} className="space-y-4">
                     <div>
                       <label
                         htmlFor="flag"
-                        className="mb-2 block text-sm font-medium text-monarch-900"
+                        className="mb-2 block text-sm font-medium text-monarch"
                       >
                         Flag
                       </label>
@@ -466,18 +424,18 @@ export default function ChallengeDetailPage() {
                         id="flag"
                         type="text"
                         placeholder="flag{enter_your_flag_here}"
-                        value={flag}
-                        onChange={(e) => setFlag(e.target.value)}
-                        disabled={submitting}
-                        className="w-full rounded-lg border border-monarch-900/20 bg-white px-4 py-3 text-monarch-900 placeholder-monarch-900/40 transition-all focus:border-[#0D6BA8] focus:outline-none focus:ring-2 focus:ring-[#0D6BA8]/20 disabled:cursor-not-allowed disabled:opacity-50"
+                        value={answer}
+                        onChange={(e) => setAnswer(e.target.value)}
+                        disabled={loadingAttempt || hasCompletedChallenge}
+                        className="w-full rounded-lg border border-monarch/20 bg-white px-4 py-3 text-monarch placeholder-monarch/40 transition-all focus:border-[#0D6BA8] focus:outline-none focus:ring-2 focus:ring-[#0D6BA8]/20 disabled:cursor-not-allowed disabled:opacity-50"
                       />
                     </div>
                     <button
                       type="submit"
-                      disabled={submitting || !flag.trim()}
-                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-linear-to-r from-monarch-900 to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+                      disabled={loadingAttempt || hasCompletedChallenge}
+                      className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-linear-to-r from-monarch to-[#0D6BA8] px-6 py-3 font-semibold text-white shadow-lg transition-all hover:scale-105 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
                     >
-                      {submitting ? (
+                      {loadingAttempt ? (
                         <>
                           <div className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
                           Submitting...
@@ -507,7 +465,7 @@ export default function ChallengeDetailPage() {
             </div>
 
             {/* Attempts History */}
-            <div className="rounded-2xl border border-monarch-900/10 bg-white p-8 shadow-lg">
+            <div className="rounded-2xl border border-monarch/10 bg-white p-8 shadow-lg">
               <div className="mb-6 flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-[#98C5EA]/20 to-[#0D6BA8]/20">
                   <svg
@@ -524,15 +482,15 @@ export default function ChallengeDetailPage() {
                     />
                   </svg>
                 </div>
-                <h2 className="text-2xl font-bold text-monarch-900">
+                <h2 className="text-2xl font-bold text-monarch">
                   Your Attempts
                 </h2>
               </div>
 
               {!user ? (
-                <div className="rounded-xl border border-monarch-900/10 bg-monarch-900/5 p-6 text-center">
+                <div className="rounded-xl border border-monarch/10 bg-monarch/5 p-6 text-center">
                   <svg
-                    className="mx-auto mb-3 h-12 w-12 text-monarch-900/40"
+                    className="mx-auto mb-3 h-12 w-12 text-monarch/40"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -544,14 +502,12 @@ export default function ChallengeDetailPage() {
                       d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
                     />
                   </svg>
-                  <p className="text-monarch-900/70">
-                    Login to see your attempts.
-                  </p>
+                  <p className="text-monarch/70">Login to see your attempts.</p>
                 </div>
               ) : attempts.length === 0 ? (
-                <div className="rounded-xl border border-monarch-900/10 bg-monarch-900/5 p-6 text-center">
+                <div className="rounded-xl border border-monarch/10 bg-monarch/5 p-6 text-center">
                   <svg
-                    className="mx-auto mb-3 h-12 w-12 text-monarch-900/40"
+                    className="mx-auto mb-3 h-12 w-12 text-monarch/40"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -563,7 +519,7 @@ export default function ChallengeDetailPage() {
                       d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
                     />
                   </svg>
-                  <p className="text-monarch-900/70">
+                  <p className="text-monarch/70">
                     No attempts yet. Be the first to try!
                   </p>
                 </div>
@@ -572,17 +528,47 @@ export default function ChallengeDetailPage() {
                   {attempts.map((a) => (
                     <div
                       key={a._id}
-                      className="rounded-lg border border-monarch-900/10 bg-monarch-900/5 p-4 transition-all hover:border-[#0D6BA8]/30 hover:bg-[#98C5EA]/5"
+                      className="rounded-lg border border-monarch/10 bg-monarch/5 p-4 transition-all hover:border-[#0D6BA8]/30 hover:bg-[#98C5EA]/5"
                     >
                       <div className="flex flex-wrap items-center justify-between gap-3">
                         <div className="flex items-center gap-3">
-                          {getResultBadge(a.result)}
-                          <span className="text-sm text-monarch-900/60">
+                          {a.result === "correct" ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                              <svg
+                                className="h-3 w-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Correct
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full border border-red-200 bg-red-50 px-2.5 py-0.5 text-xs font-medium text-red-700">
+                              <svg
+                                className="h-3 w-3"
+                                fill="currentColor"
+                                viewBox="0 0 20 20"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                              Incorrect
+                            </span>
+                          )}
+                          <span className="text-sm text-monarch/60">
                             {new Date(a.createdAt).toLocaleString()}
                           </span>
                         </div>
                         {a.answers && a.answers.length > 0 && (
-                          <code className="rounded bg-monarch-900/10 px-2 py-1 text-xs font-mono text-monarch-900">
+                          <code className="rounded bg-monarch/10 px-2 py-1 text-xs font-mono text-monarch">
                             {a.answers.join(", ")}
                           </code>
                         )}
@@ -596,57 +582,52 @@ export default function ChallengeDetailPage() {
 
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            {/* Challenge Stats */}
-            <div className="sticky top-6 rounded-2xl border border-monarch-900/10 bg-white p-6 shadow-lg">
-              <h3 className="mb-4 text-lg font-bold text-monarch-900">
+            <div className="sticky top-6 rounded-2xl border border-monarch/10 bg-white p-6 shadow-lg">
+              <h3 className="mb-4 text-lg font-bold text-monarch">
                 Challenge Stats
               </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-monarch-900/70">
-                    Difficulty
-                  </span>
+                  <span className="text-sm text-monarch/70">Difficulty</span>
                   <span
                     className={`text-sm font-semibold ${
-                      problem.difficulty?.toLowerCase() === "easy"
+                      challenge.difficulty?.toLowerCase() === "easy"
                         ? "text-green-600"
-                        : problem.difficulty?.toLowerCase() === "medium"
+                        : challenge.difficulty?.toLowerCase() === "medium"
                         ? "text-yellow-600"
                         : "text-red-600"
                     }`}
                   >
-                    {problem.difficulty || "Unknown"}
+                    {challenge.difficulty || "Unknown"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-monarch-900/70">Points</span>
+                  <span className="text-sm text-monarch/70">Points</span>
                   <span className="text-sm font-semibold text-[#0D6BA8]">
-                    {problem.points || "N/A"}
+                    {challenge.points || "N/A"}
                   </span>
                 </div>
-                {problem.category && (
+                {challenge.category && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-monarch-900/70">
-                      Category
-                    </span>
-                    <span className="text-sm font-semibold text-monarch-900">
-                      {problem.category}
+                    <span className="text-sm text-monarch/70">Category</span>
+                    <span className="text-sm font-semibold text-monarch">
+                      {challenge.category}
                     </span>
                   </div>
                 )}
                 {user && attempts.length > 0 && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-monarch-900/70">
+                    <span className="text-sm text-monarch/70">
                       Your Attempts
                     </span>
-                    <span className="text-sm font-semibold text-monarch-900">
+                    <span className="text-sm font-semibold text-monarch">
                       {attempts.length}
                     </span>
                   </div>
                 )}
               </div>
 
-              <div className="mt-6 pt-6 border-t border-monarch-900/10">
+              <div className="mt-6 pt-6 border-t border-monarch/10">
                 <button
                   onClick={() => router.push("/leaderboard")}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#0D6BA8]/20 bg-[#0D6BA8]/5 px-4 py-2.5 text-sm font-medium text-[#0D6BA8] transition-all hover:bg-[#0D6BA8]/10"

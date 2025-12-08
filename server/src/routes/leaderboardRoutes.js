@@ -1,25 +1,14 @@
-// src/routes/leaderboardRoutes.js
 const express = require("express");
 const Attempt = require("../models/Attempt");
 const User = require("../models/User");
 
 const router = express.Router();
 
-/**
- * GET /api/leaderboard
- *
- * Ranking:
- *  - solvedCount: number of unique problems solved (has at least one "correct" attempt)
- *  - totalAttempts: total attempts across all problems
- *  - sorted by solvedCount DESC, totalAttempts ASC
- *  - excludes admin users
- */
 router.get("/", async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit || "50", 10); // optional ?limit=10
+    const limit = parseInt(req.query.limit || "50", 10);
 
     const leaderboardRaw = await Attempt.aggregate([
-      // group by user + problem to get attempts per problem and whether solved
       {
         $group: {
           _id: { userId: "$userId", problemId: "$problemId" },
@@ -31,7 +20,6 @@ router.get("/", async (req, res) => {
           },
         },
       },
-      // now group by user to get totals
       {
         $group: {
           _id: "$_id.userId",
@@ -39,23 +27,20 @@ router.get("/", async (req, res) => {
           solvedCount: { $sum: "$hasCorrect" },
         },
       },
-      // join with users collection to get name/email/isAdmin
       {
         $lookup: {
-          from: "users", // collection name in Mongo
+          from: "users",
           localField: "_id",
           foreignField: "_id",
           as: "user",
         },
       },
       { $unwind: "$user" },
-      // exclude admins from leaderboard
       {
         $match: {
           "user.isAdmin": { $ne: true },
         },
       },
-      // sort by solved DESC, attempts ASC, then by name/email for stable order
       {
         $sort: {
           solvedCount: -1,
@@ -63,9 +48,7 @@ router.get("/", async (req, res) => {
           "user.name": 1,
         },
       },
-      // optionally limit number of rows
       { $limit: limit },
-      // project final shape
       {
         $project: {
           _id: 0,
@@ -77,8 +60,6 @@ router.get("/", async (req, res) => {
         },
       },
     ]);
-
-    // add rank number (1-based)
     const leaderboard = leaderboardRaw.map((entry, index) => ({
       rank: index + 1,
       ...entry,

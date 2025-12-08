@@ -1,4 +1,3 @@
-// src/routes/authRoutes.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -7,7 +6,6 @@ const { auth } = require("../middleware/auth");
 
 const router = express.Router();
 
-// helper: create JWT and set cookie
 function setTokenCookie(res, user) {
   const token = jwt.sign(
     { userId: user._id, isAdmin: user.isAdmin },
@@ -18,7 +16,7 @@ function setTokenCookie(res, user) {
   res.cookie(process.env.COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: false, // set to true in production with HTTPS
+    secure: false, //I will set it true in production
     maxAge: 7 * 24 * 60 * 60 * 1000,
   });
 }
@@ -39,7 +37,6 @@ router.post("/register", async (req, res) => {
       name,
       email,
       passwordHash,
-      // isAdmin stays false by default (you can manually flip first user in DB)
     });
 
     setTokenCookie(res, user);
@@ -89,7 +86,6 @@ router.post("/logout", (req, res) => {
 
 // GET /api/auth/me  -> return current logged-in user from cookie
 router.get("/me", auth, (req, res) => {
-  // auth middleware already loaded the user into req.user
   return res.json({
     id: req.user.id,
     name: req.user.name,

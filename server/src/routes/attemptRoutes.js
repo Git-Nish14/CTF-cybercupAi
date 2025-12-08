@@ -1,4 +1,3 @@
-// src/routes/attemptRoutes.js
 const express = require("express");
 const { auth } = require("../middleware/auth");
 const Attempt = require("../models/Attempt");
@@ -9,12 +8,10 @@ const router = express.Router();
 // POST /api/attempts/:problemId  (submit flag)
 router.post("/:problemId", auth, async (req, res) => {
   try {
-    const { answers } = req.body; // array of strings OR a single string
+    const { answers } = req.body;
 
     const problem = await Problem.findById(req.params.problemId);
     if (!problem) return res.status(404).json({ message: "Problem not found" });
-
-    // 🚫 1. Check if user already solved this problem
     const alreadySolved = await Attempt.findOne({
       userId: req.user.id,
       problemId: problem._id,
@@ -28,16 +25,16 @@ router.post("/:problemId", auth, async (req, res) => {
       });
     }
 
-    // 2. Normalize answers to an array
+    // Normalize answers to an array
     let answersArray = answers;
     if (!Array.isArray(answersArray)) {
       answersArray = [String(answers)];
     }
 
-    // 3. Check correctness
+    //Check correctness
     const isCorrect = answersArray.includes(problem.flagAnswer);
 
-    // 4. Create new attempt
+    // Create new attempt
     const attempt = await Attempt.create({
       userId: req.user.id,
       problemId: problem._id,
@@ -68,15 +65,14 @@ router.get("/:problemId", auth, async (req, res) => {
 });
 
 // GET /api/attempts/mine/:problemId
-// Returns all attempts of the logged-in user for a specific problem
 router.get("/mine/:problemId", auth, async (req, res) => {
   try {
     const { problemId } = req.params;
 
     const attempts = await Attempt.find({
-      userId: req.user.id, // from auth middleware
+      userId: req.user.id,
       problemId: problemId,
-    }).sort({ createdAt: -1 }); // latest first (change to 1 for oldest first)
+    }).sort({ createdAt: -1 });
 
     return res.json(attempts);
   } catch (err) {

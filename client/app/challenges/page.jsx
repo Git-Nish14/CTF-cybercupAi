@@ -8,7 +8,7 @@ export default function ChallengesPage() {
   const [challenges, setChallenges] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, easy, medium, hard
+  const [filter, setFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
@@ -91,7 +91,6 @@ export default function ChallengesPage() {
     return null;
   };
 
-  // Filter challenges
   const filteredChallenges = challenges
     .filter((c) => {
       if (filter === "all") return true;
@@ -233,10 +232,7 @@ export default function ChallengesPage() {
             <div className="text-sm text-red-600">Hard</div>
           </div>
         </div>
-
-        {/* Search and Filter */}
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          {/* Search Bar */}
           <div className="relative flex-1 max-w-md">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <svg
@@ -364,20 +360,14 @@ export default function ChallengesPage() {
                       </span>
                     )}
                   </div>
-
-                  {/* Title */}
                   <h3 className="mb-3 text-xl font-bold text-monarch-900 transition-colors group-hover:text-[#0D6BA8]">
                     {challenge.title}
                   </h3>
-
-                  {/* Description */}
                   {challenge.description && (
                     <p className="mb-4 line-clamp-3 text-sm text-monarch-900/70">
                       {challenge.description}
                     </p>
                   )}
-
-                  {/* Category Tag */}
                   {challenge.category && (
                     <div className="mb-4">
                       <span className="inline-flex items-center gap-1.5 rounded-md border border-monarch-900/10 bg-monarch-900/5 px-2.5 py-1 text-xs font-medium text-monarch-900">
@@ -398,8 +388,6 @@ export default function ChallengesPage() {
                       </span>
                     </div>
                   )}
-
-                  {/* Action Arrow */}
                   <div className="flex items-center gap-2 text-[#0D6BA8] font-medium text-sm">
                     <span>Start Challenge</span>
                     <svg
@@ -416,19 +404,15 @@ export default function ChallengesPage() {
                       />
                     </svg>
                   </div>
-
-                  {/* Hover Effect linear */}
                   <div className="absolute inset-0 -z-10 bg-linear-to-br from-[#98C5EA]/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
                 </div>
               </Link>
             ))}
           </div>
         )}
-
-        {/* Bottom CTA */}
         {filteredChallenges.length > 0 && (
           <div className="mt-12 rounded-2xl border border-monarch-900/10 bg-linear-to-r from-monarch-900 to-[#0D6BA8] p-8 text-center shadow-xl">
-            <h3 className="mb-2 text-2xl font-bold text-white">
+            <h3 className="mb-2 text-2xl font-bold text-white!">
               View Your Progress
             </h3>
             <p className="mb-6 text-[#98C5EA]">

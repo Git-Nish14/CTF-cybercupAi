@@ -1,4 +1,3 @@
-//problems management page for admin users
 "use client";
 
 import { useEffect, useState } from "react";
@@ -11,8 +10,8 @@ export default function AdminProblemsPage() {
   const [problems, setProblems] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("all"); // all, easy, medium, hard
-  const [deleting, setDeleting] = useState(null); // track which problem is being deleted
+  const [filter, setFilter] = useState("all");
+  const [deleting, setDeleting] = useState(null);
 
   useEffect(() => {
     async function load() {
