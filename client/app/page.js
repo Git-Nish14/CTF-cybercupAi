@@ -113,6 +113,7 @@ export default function HomePage() {
     },
   ];
 
+  //just for demo purposes
   const stats = [
     { number: "10K+", label: "Hackers" },
     { number: "500+", label: "Challenges" },
@@ -134,23 +135,6 @@ export default function HomePage() {
       >
         <div className="mx-auto max-w-7xl">
           <div className="text-center">
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-hudson/30 bg-hudson/10 px-4 py-2 text-xs font-medium text-chesapeake sm:text-sm">
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 10V3L4 14h7v7l9-11h-7z"
-                />
-              </svg>
-              Forward-Focused Cybersecurity Platform
-            </div>
-
             <h1 className="mb-6 text-4xl font-bold tracking-tight text-monarch-900 sm:text-5xl md:text-6xl lg:text-7xl">
               Master Cybersecurity
               <br />

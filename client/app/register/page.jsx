@@ -1,18 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const { register, user, loading } = useAuth();
+  const { register, googleLogin, user, loading } = useAuth();
 
   const [form, setForm] = useState({ name: "", email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const googleButtonRef = useRef(null);
   const [validation, setValidation] = useState({
     email: { valid: null, message: "" },
     password: { valid: null, message: "" },
@@ -26,6 +27,53 @@ export default function RegisterPage() {
       else router.replace("/challenges");
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!googleButtonRef.current) return;
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      if (
+        !window.google ||
+        !window.google.accounts ||
+        !window.google.accounts.id
+      )
+        return;
+
+      window.google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: async (response) => {
+          try {
+            setError("");
+            setIsLoading(true);
+            const data = await googleLogin(response.credential);
+            if (data.isAdmin) router.push("/admin");
+            else router.push("/challenges");
+          } catch (err) {
+            console.error(err);
+            setError(err.message || "Google sign up failed");
+            setIsLoading(false);
+          }
+        },
+      });
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+      });
+    };
+
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [googleButtonRef, googleLogin, router]);
 
   const validateEmail = (email) => {
     if (!email) {
@@ -168,7 +216,6 @@ export default function RegisterPage() {
               Create your account and start hacking
             </p>
           </div>
-
           {error && (
             <div className="mb-6 flex items-start gap-3 rounded-lg border border-red-500/20 bg-red-50 p-4">
               <svg
@@ -185,7 +232,6 @@ export default function RegisterPage() {
               <p className="text-sm text-red-600">{error}</p>
             </div>
           )}
-
           <form onSubmit={onSubmit} className="space-y-5">
             {/* Name Field */}
             <div>
@@ -449,7 +495,7 @@ export default function RegisterPage() {
                 </Link>{" "}
                 and{" "}
                 <Link
-                  href="/privacy"
+                  href="/privacy-policy"
                   className="font-medium text-chesapeake transition-colors hover:text-hudson"
                 >
                   Privacy Policy
@@ -508,7 +554,18 @@ export default function RegisterPage() {
               )}
             </button>
           </form>
-
+          {/* Divider */}
+          <div className="mt-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-monarch-900/10" />
+            <span className="text-xs uppercase tracking-wide text-monarch-900/40">
+              or
+            </span>
+            <div className="h-px flex-1 bg-monarch-900/10" />
+          </div>
+          {/* Google Sign Up button */}{" "}
+          <div className="mt-4">
+            <div ref={googleButtonRef} className="flex justify-center" />
+          </div>
           <div className="mt-8 text-center">
             <p className="text-monarch-900/70">
               Already have an account?{" "}

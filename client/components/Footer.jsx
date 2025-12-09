@@ -14,14 +14,14 @@ export default function Footer() {
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-linear-to-br from-monarch-900 via-chesapeake to-hudson shadow-md">
                 <span className="text-base font-bold text-white">C</span>
               </div>
-              <div>
+              <Link href="/" className="flex flex-col">
                 <span className="block text-base font-semibold bg-linear-to-r from-monarch-900 to-chesapeake bg-clip-text text-transparent">
                   CTF-Cybercup.ai
                 </span>
                 <span className="block text-[9px] uppercase tracking-wider text-silver">
                   Forward-Focused
                 </span>
-              </div>
+              </Link>
             </div>
             <p className="text-sm text-monarch-900/70 leading-relaxed">
               Master cybersecurity through competition. Built with innovation

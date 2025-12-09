@@ -1,18 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, user, loading } = useAuth();
+  const { login, googleLogin, user, loading } = useAuth();
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const googleButtonRef = useRef(null);
 
   useEffect(() => {
     if (loading) return;
@@ -24,6 +26,53 @@ export default function LoginPage() {
       }
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    if (!googleButtonRef.current) return;
+
+    const script = document.createElement("script");
+    script.src = "https://accounts.google.com/gsi/client";
+    script.async = true;
+    script.defer = true;
+
+    script.onload = () => {
+      if (
+        !window.google ||
+        !window.google.accounts ||
+        !window.google.accounts.id
+      )
+        return;
+
+      window.google.accounts.id.initialize({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
+        callback: async (response) => {
+          try {
+            setError("");
+            setIsLoading(true);
+            const data = await googleLogin(response.credential);
+            if (data.isAdmin) router.push("/admin");
+            else router.push("/challenges");
+          } catch (err) {
+            console.error(err);
+            setError(err.message || "Google login failed");
+            setIsLoading(false);
+          }
+        },
+      });
+
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        theme: "outline",
+        size: "large",
+        width: "100%",
+      });
+    };
+
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, [googleButtonRef, googleLogin, router]);
 
   const onChange = (e) => {
     setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
@@ -230,6 +279,19 @@ export default function LoginPage() {
               )}
             </button>
           </form>
+          {/* NEW: Divider */}
+          <div className="mt-6 flex items-center gap-4">
+            <div className="h-px flex-1 bg-monarch-900/10" />
+            <span className="text-xs uppercase tracking-wide text-monarch-900/40">
+              or
+            </span>
+            <div className="h-px flex-1 bg-monarch-900/10" />
+          </div>
+
+          {/* NEW: Google Sign-in button */}
+          <div className="mt-4">
+            <div ref={googleButtonRef} className="flex justify-center" />
+          </div>
 
           <div className="mt-8 text-center">
             <p className="text-monarch-900/70">

@@ -2,10 +2,13 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "../../context/AuthContext";
 import { apiRequest } from "../../lib/api";
 
 export default function ChallengesPage() {
+  const { user } = useAuth();
   const [challenges, setChallenges] = useState([]);
+  const [solvedProblems, setSolvedProblems] = useState(new Set());
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -17,6 +20,19 @@ export default function ChallengesPage() {
         setLoading(true);
         const data = await apiRequest("/api/problems");
         setChallenges(data);
+
+        // If user is logged in, fetch their solved problems
+        if (user) {
+          try {
+            const response = await apiRequest("/api/attempts/mine/solved");
+            const solvedIds = new Set(
+              (response.solvedProblemIds || []).map((id) => String(id))
+            );
+            setSolvedProblems(solvedIds);
+          } catch (err) {
+            console.error("Failed to load user solves:", err);
+          }
+        }
       } catch (err) {
         console.error(err);
         setError(err.message || "Failed to load challenges");
@@ -25,7 +41,20 @@ export default function ChallengesPage() {
       }
     }
     load();
-  }, []);
+  }, [user]);
+
+  const handleChallengeClick = async (e, challengeId) => {
+    // Check if already solved before navigation
+    if (user && solvedProblems.has(challengeId)) {
+      e.preventDefault();
+      const confirmed = window.confirm(
+        "You have already solved this problem. No more attempts allowed.\n\nDo you want to view the challenge details?"
+      );
+      if (confirmed) {
+        window.location.href = `/challenges/${challengeId}`;
+      }
+    }
+  };
 
   const getDifficultyColor = (difficulty) => {
     const d = difficulty?.toLowerCase();
@@ -232,6 +261,7 @@ export default function ChallengesPage() {
             <div className="text-sm text-red-600">Hard</div>
           </div>
         </div>
+
         <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1 max-w-md">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
@@ -328,23 +358,108 @@ export default function ChallengesPage() {
         {/* Challenges Grid */}
         {filteredChallenges.length > 0 && (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredChallenges.map((challenge) => (
-              <Link key={challenge._id} href={`/challenges/${challenge._id}`}>
-                <div className="group relative h-full overflow-hidden rounded-xl border border-monarch-900/10 bg-white p-6 shadow-sm transition-all hover:border-[#0D6BA8]/50 hover:shadow-xl hover:-translate-y-1">
-                  {/* Difficulty Badge */}
-                  <div className="mb-4 flex items-center justify-between">
-                    <span
-                      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${getDifficultyColor(
-                        challenge.difficulty
-                      )}`}
-                    >
-                      {getDifficultyIcon(challenge.difficulty)}
-                      {challenge.difficulty || "Unknown"}
-                    </span>
-                    {challenge.points && (
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[#0D6BA8]/20 bg-[#0D6BA8]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0D6BA8]">
+            {filteredChallenges.map((challenge) => {
+              const isSolved = solvedProblems.has(String(challenge._id));
+
+              return (
+                <div
+                  key={challenge._id}
+                  onClick={(e) => handleChallengeClick(e, challenge._id)}
+                  className="cursor-pointer"
+                >
+                  <Link href={`/challenges/${challenge._id}`}>
+                    <div className="group relative h-full overflow-hidden rounded-xl border border-monarch-900/10 bg-white p-6 shadow-sm transition-all hover:border-[#0D6BA8]/50 hover:shadow-xl hover:-translate-y-1">
+                      {/* Completed Badge - Top Right Corner */}
+                      {user && isSolved && (
+                        <div className="absolute top-4 right-4 z-10">
+                          <div className="flex items-center gap-1.5 rounded-full bg-linear-to-r from-green-500 to-emerald-600 px-3 py-1.5 shadow-lg">
+                            <svg
+                              className="h-4 w-4 text-white"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
+                            </svg>
+                            <span className="text-xs font-bold text-white">
+                              COMPLETED
+                            </span>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Difficulty Badge */}
+                      <div className="mb-4 flex items-center justify-between">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium ${getDifficultyColor(
+                            challenge.difficulty
+                          )}`}
+                        >
+                          {getDifficultyIcon(challenge.difficulty)}
+                          {challenge.difficulty || "Unknown"}
+                        </span>
+                        {challenge.points && (
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#0D6BA8]/20 bg-[#0D6BA8]/10 px-2.5 py-0.5 text-xs font-semibold text-[#0D6BA8]">
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                              />
+                            </svg>
+                            {challenge.points} pts
+                          </span>
+                        )}
+                      </div>
+
+                      <h3 className="mb-3 text-xl font-bold text-monarch-900 transition-colors group-hover:text-[#0D6BA8]">
+                        {challenge.title}
+                      </h3>
+
+                      {challenge.description && (
+                        <p className="mb-4 line-clamp-3 text-sm text-monarch-900/70">
+                          {challenge.description}
+                        </p>
+                      )}
+
+                      {challenge.category && (
+                        <div className="mb-4">
+                          <span className="inline-flex items-center gap-1.5 rounded-md border border-monarch-900/10 bg-monarch-900/5 px-2.5 py-1 text-xs font-medium text-monarch-900">
+                            <svg
+                              className="h-3 w-3"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
+                              />
+                            </svg>
+                            {challenge.category}
+                          </span>
+                        </div>
+                      )}
+
+                      <div className="flex items-center gap-2 text-[#0D6BA8] font-medium text-sm">
+                        <span>
+                          {isSolved ? "View Challenge" : "Start Challenge"}
+                        </span>
                         <svg
-                          className="h-3 w-3"
+                          className="h-4 w-4 transition-transform group-hover:translate-x-1"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -353,63 +468,20 @@ export default function ChallengesPage() {
                             strokeLinecap="round"
                             strokeLinejoin="round"
                             strokeWidth={2}
-                            d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
+                            d="M13 7l5 5m0 0l-5 5m5-5H6"
                           />
                         </svg>
-                        {challenge.points} pts
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="mb-3 text-xl font-bold text-monarch-900 transition-colors group-hover:text-[#0D6BA8]">
-                    {challenge.title}
-                  </h3>
-                  {challenge.description && (
-                    <p className="mb-4 line-clamp-3 text-sm text-monarch-900/70">
-                      {challenge.description}
-                    </p>
-                  )}
-                  {challenge.category && (
-                    <div className="mb-4">
-                      <span className="inline-flex items-center gap-1.5 rounded-md border border-monarch-900/10 bg-monarch-900/5 px-2.5 py-1 text-xs font-medium text-monarch-900">
-                        <svg
-                          className="h-3 w-3"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
-                          />
-                        </svg>
-                        {challenge.category}
-                      </span>
+                      </div>
+
+                      <div className="absolute inset-0 -z-10 bg-linear-to-br from-[#98C5EA]/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
                     </div>
-                  )}
-                  <div className="flex items-center gap-2 text-[#0D6BA8] font-medium text-sm">
-                    <span>Start Challenge</span>
-                    <svg
-                      className="h-4 w-4 transition-transform group-hover:translate-x-1"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 7l5 5m0 0l-5 5m5-5H6"
-                      />
-                    </svg>
-                  </div>
-                  <div className="absolute inset-0 -z-10 bg-linear-to-br from-[#98C5EA]/5 to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
+                  </Link>
                 </div>
-              </Link>
-            ))}
+              );
+            })}
           </div>
         )}
+
         {filteredChallenges.length > 0 && (
           <div className="mt-12 rounded-2xl border border-monarch-900/10 bg-linear-to-r from-monarch-900 to-[#0D6BA8] p-8 text-center shadow-xl">
             <h3 className="mb-2 text-2xl font-bold text-white!">
@@ -420,7 +492,7 @@ export default function ChallengesPage() {
               competitors.
             </p>
             <Link href="/leaderboard">
-              <button className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-monarch-900 shadow-lg transition-all hover:scale-105">
+              <button className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-monarch-900 shadow-lg transition-all hover:scale-105">
                 View Leaderboard
                 <svg
                   className="h-5 w-5"

@@ -114,12 +114,6 @@ export default function LeaderboardPage() {
           </p>
           <div className="mt-6 grid grid-cols-3 gap-4 w-full">
             <div>
-              <div className={`text-2xl font-bold ${color.text}`}>
-                {user.score || 0}
-              </div>
-              <div className="text-xs text-monarch-900/60">Score</div>
-            </div>
-            <div>
               <div className="text-2xl font-bold text-green-600">
                 {user.solvedCount || 0}
               </div>
@@ -194,22 +188,6 @@ export default function LeaderboardPage() {
             <div className="text-sm text-monarch-900/60">
               Active Competitors
             </div>
-          </div>
-
-          <div className="rounded-xl border border-monarch-900/10 bg-white p-6 text-center shadow-sm">
-            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-yellow-100 to-yellow-200">
-              <svg
-                className="h-6 w-6 text-yellow-600"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
-              </svg>
-            </div>
-            <div className="text-2xl font-bold text-monarch-900">
-              {topThree[0]?.score || 0}
-            </div>
-            <div className="text-sm text-monarch-900/60">Top Score</div>
           </div>
 
           <div className="rounded-xl border border-monarch-900/10 bg-white p-6 text-center shadow-sm">
@@ -320,9 +298,6 @@ export default function LeaderboardPage() {
                       Competitor
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-monarch-900">
-                      Score
-                    </th>
-                    <th className="px-6 py-4 text-center text-sm font-semibold text-monarch-900">
                       Solved
                     </th>
                     <th className="px-6 py-4 text-center text-sm font-semibold text-monarch-900">
@@ -372,24 +347,6 @@ export default function LeaderboardPage() {
                           </div>
                         </td>
                         <td className="px-6 py-4 text-center">
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-[#0D6BA8]/20 bg-[#0D6BA8]/10 px-3 py-1 text-sm font-semibold text-[#0D6BA8]">
-                            <svg
-                              className="h-4 w-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"
-                              />
-                            </svg>
-                            {user.score || 0}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 text-center">
                           <span className="inline-flex items-center gap-1.5 rounded-full border border-green-200 bg-green-50 px-3 py-1 text-sm font-semibold text-green-700">
                             <svg
                               className="h-4 w-4"
@@ -436,16 +393,16 @@ export default function LeaderboardPage() {
 
         {/* Call to Action */}
         {leaderboard.length > 0 && (
-          <div className="mt-12 rounded-2xl border border-monarch-900/10 bg-linear-to-r from-monarch-900 to-[#0D6BA8] p-8 text-center shadow-xl">
-            <h3 className="mb-2 text-2xl font-bold text-white">
+          <div className="mt-12 rounded- border border-monarch-900/10 bg-linear-to-r from-monarch-900 to-[#0D6BA8] p-8 text-center shadow-xl">
+            <h3 className="mb-2 text-2xl font-bold text-white!">
               Ready to Compete?
             </h3>
             <p className="mb-6 text-[#98C5EA]">
               Join the challenge and prove your skills. Every problem solved
               brings you closer to the top.
             </p>
-            <Link href="/problems">
-              <button className="inline-flex items-center gap-2 rounded-lg bg-white px-6 py-3 font-semibold text-monarch-900 shadow-lg transition-all hover:scale-105">
+            <Link href="/challenges">
+              <button className="inline-flex items-center gap-2 rounded-full bg-white px-6 py-3 font-semibold text-monarch-900 shadow-lg transition-all hover:scale-105">
                 View Challenges
                 <svg
                   className="h-5 w-5"

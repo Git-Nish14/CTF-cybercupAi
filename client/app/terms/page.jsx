@@ -215,7 +215,7 @@ export default function TermsPage() {
       {/* Content */}
       <section
         ref={contentRef}
-        className="px-4 py-12 opacity-0 translate-y-4 transition-all duration-700 sm:px-6 lg:px-8"
+        className="px-4 py-12 translate-y-4 transition-all duration-700 sm:px-6 lg:px-8"
       >
         <div className="mx-auto max-w-4xl">
           <div className="space-y-12">

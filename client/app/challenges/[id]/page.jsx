@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { apiRequest } from "../../../lib/api";
@@ -8,6 +8,7 @@ export default function ChallengeDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const successTimeoutRef = useRef(null);
 
   const [challenge, setChallenge] = useState(null);
   const [attempts, setAttempts] = useState([]);
@@ -31,6 +32,25 @@ export default function ChallengeDetailPage() {
     }
     if (id) loadChallenge();
   }, [id]);
+
+  useEffect(() => {
+    if (successMessage) {
+      const handleDismiss = () => {
+        setSuccessMessage("");
+        if (successTimeoutRef.current) {
+          clearTimeout(successTimeoutRef.current);
+        }
+      };
+
+      window.addEventListener("click", handleDismiss);
+      window.addEventListener("scroll", handleDismiss);
+
+      return () => {
+        window.removeEventListener("click", handleDismiss);
+        window.removeEventListener("scroll", handleDismiss);
+      };
+    }
+  }, [successMessage]);
 
   // Load attempts for current user
   const loadAttempts = async () => {
@@ -60,6 +80,11 @@ export default function ChallengeDetailPage() {
   const onSubmitFlag = async (e) => {
     e.preventDefault();
 
+    if (!answer.trim()) {
+      setAttemptError("Flag cannot be empty.");
+      return;
+    }
+
     if (!user) {
       setAttemptError("You must be logged in to submit a flag.");
       return;
@@ -81,6 +106,17 @@ export default function ChallengeDetailPage() {
       });
       setAnswer("");
       setSuccessMessage(result.message || "Attempt submitted successfully!");
+
+      // Clear any existing timeout
+      if (successTimeoutRef.current) {
+        clearTimeout(successTimeoutRef.current);
+      }
+
+      // Set new timeout to clear message after 10 seconds
+      successTimeoutRef.current = setTimeout(() => {
+        setSuccessMessage("");
+      }, 10000);
+
       await loadAttempts();
     } catch (err) {
       console.error(err);

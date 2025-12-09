@@ -313,7 +313,7 @@ export default function AdminHomePage() {
                 System Snapshot
               </h2>
               <div className="space-y-4">
-                <div className="rounded-2xl bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
+                <div className="rounded-full bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-monarch-900/60">
                     Problems
                   </p>
@@ -327,7 +327,7 @@ export default function AdminHomePage() {
                     </p>
                   )}
                 </div>
-                <div className="rounded-2xl bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
+                <div className="rounded-full bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-monarch-900/60">
                     Users
                   </p>
@@ -341,7 +341,7 @@ export default function AdminHomePage() {
                     </p>
                   )}
                 </div>
-                <div className="rounded-2xl bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
+                <div className="rounded-full bg-linear-to-br from-wisconsin-gray to-white p-4 text-center border border-monarch-900/5">
                   <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-monarch-900/60">
                     Attempts
                   </p>

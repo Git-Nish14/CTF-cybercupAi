@@ -121,7 +121,7 @@ export default function Navbar() {
               </div>
               <button
                 onClick={handleLogout}
-                className="rounded-lg border border-red-500/20 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-100 hover:border-red-500/30 hover:shadow"
+                className="rounded-full border border-red-500/20 bg-red-50 px-4 py-2 text-sm font-medium text-red-600 shadow-sm transition-all hover:bg-red-100 hover:border-red-500/30 hover:shadow"
               >
                 Logout
               </button>
@@ -130,13 +130,13 @@ export default function Navbar() {
             <>
               <Link
                 href="/login"
-                className="px-4 py-2 text-sm font-medium text-monarch-900 transition-colors hover:text-chesapeake"
+                className="px-4 py-2 rounded-full text-sm font-medium text-monarch-900 transition-colors hover:text-chesapeake"
               >
                 Login
               </Link>
               <Link
                 href="/register"
-                className="group relative overflow-hidden rounded-lg bg-linear-to-r from-monarch-900 to-chesapeake px-6 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
+                className="group relative overflow-hidden rounded-full bg-linear-to-r from-monarch-900 to-chesapeake px-6 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg hover:scale-105"
               >
                 <span className="relative z-10">Register</span>
                 <div className="absolute inset-0 bg-linear-to-r from-chesapeake to-hudson opacity-0 transition-opacity group-hover:opacity-100" />

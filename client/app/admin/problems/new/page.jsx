@@ -14,7 +14,6 @@ export default function NewProblemPage() {
     description: "",
     flagAnswer: "",
     difficulty: "easy",
-    category: "",
     points: "",
   });
   const [error, setError] = useState("");
@@ -176,23 +175,6 @@ export default function NewProblemPage() {
                 required
                 className="w-full rounded-full border border-monarch-900/20 bg-white px-6 py-3 text-monarch-900 placeholder:text-monarch-900/40 focus:border-chesapeake focus:outline-none focus:ring-2 focus:ring-chesapeake/20 transition-all"
               />
-            </div>
-
-            {/* Category and Points Row */}
-            <div className="mb-6 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-monarch-900">
-                  Category
-                </label>
-                <input
-                  type="text"
-                  name="category"
-                  placeholder="e.g., Web, Crypto, Forensics"
-                  value={form.category}
-                  onChange={onChange}
-                  className="w-full rounded-full border border-monarch-900/20 bg-white px-6 py-3 text-monarch-900 placeholder:text-monarch-900/40 focus:border-chesapeake focus:outline-none focus:ring-2 focus:ring-chesapeake/20 transition-all"
-                />
-              </div>
             </div>
 
             {/* Difficulty */}
