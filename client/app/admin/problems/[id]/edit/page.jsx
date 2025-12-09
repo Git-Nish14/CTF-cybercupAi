@@ -26,7 +26,7 @@ export default function EditProblemPage() {
     async function loadProblem() {
       try {
         setLoading(true);
-        const data = await apiRequest(`/api/problems/${params.id}`);
+        const data = await apiRequest(`/api/problems/admin/${params.id}`);
         setForm({
           title: data.title || "",
           description: data.description || "",

@@ -17,7 +17,7 @@ export default function AdminProblemsPage() {
     async function load() {
       try {
         setLoading(true);
-        const data = await apiRequest("/api/problems");
+        const data = await apiRequest("/api/problems/admin/all");
         setProblems(data);
       } catch (err) {
         console.error(err);

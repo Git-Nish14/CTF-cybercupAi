@@ -4,10 +4,12 @@ const { auth, adminOnly } = require("../middleware/auth");
 
 const router = express.Router();
 
-// PUBLIC: list all problems
+// PUBLIC: list all problems (no flagAnswer)
 router.get("/", async (req, res) => {
   try {
-    const problems = await Problem.find().sort({ createdAt: -1 });
+    const problems = await Problem.find()
+      .sort({ createdAt: -1 })
+      .select("-flagAnswer");
     res.json(problems);
   } catch (err) {
     console.error(err);
@@ -15,10 +17,33 @@ router.get("/", async (req, res) => {
   }
 });
 
-// PUBLIC: get single problem
+// PUBLIC: get single problem (no flagAnswer)
 router.get("/:id", async (req, res) => {
   try {
-    const problem = await Problem.findById(req.params.id);
+    const problem = await Problem.findById(req.params.id).select("-flagAnswer");
+    if (!problem) return res.status(404).json({ message: "Not found" });
+    res.json(problem);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ADMIN: list all problems with flagAnswer
+router.get("/admin/all", auth, adminOnly, async (req, res) => {
+  try {
+    const problems = await Problem.find().sort({ createdAt: -1 }); // full docs
+    res.json(problems);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// ADMIN: get single problem with flagAnswer
+router.get("/admin/:id", auth, adminOnly, async (req, res) => {
+  try {
+    const problem = await Problem.findById(req.params.id); // full doc
     if (!problem) return res.status(404).json({ message: "Not found" });
     res.json(problem);
   } catch (err) {

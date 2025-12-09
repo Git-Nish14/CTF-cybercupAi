@@ -5,7 +5,7 @@ const Problem = require("../models/Problem");
 
 const router = express.Router();
 
-// ✅ 1) All solved problems for current user
+// 1) All solved problems for current user
 // GET /api/attempts/mine/solved
 router.get("/mine/solved", auth, async (req, res) => {
   try {
